@@ -16,10 +16,10 @@ namespace TodoApp.API.Controllers
 	{
 		private readonly ILogger<AuthController> logger;
 		private readonly IMapper mapper;
-		private readonly UserManager<IdentityUser> userManager;
+		private readonly UserManager<TodoUser> userManager;
 		private readonly IConfiguration config;
 
-		public AuthController(ILogger<AuthController> logger, IMapper mapper, UserManager<IdentityUser> userManager, IConfiguration config)
+		public AuthController(ILogger<AuthController> logger, IMapper mapper, UserManager<TodoUser> userManager, IConfiguration config)
 		{
 			this.mapper = mapper;
 			this.userManager = userManager;
@@ -31,7 +31,7 @@ namespace TodoApp.API.Controllers
 		[Route("register")]
 		public async Task<IActionResult> Register(UserDto userDto)
 		{
-			var user = mapper.Map<IdentityUser>(userDto);
+			var user = mapper.Map<TodoUser>(userDto);
 			user.UserName = userDto.Email;
 			var result = await userManager.CreateAsync(user, userDto.Password);
 			logger.LogInformation($"Registration attempt for {userDto.Email}");
@@ -90,7 +90,7 @@ namespace TodoApp.API.Controllers
 			}
 		}
 
-		private async Task<string> GenerateToken(IdentityUser user)
+		private async Task<string> GenerateToken(TodoUser user)
 		{
 			var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JwtSettings:Key"]));
 			var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);

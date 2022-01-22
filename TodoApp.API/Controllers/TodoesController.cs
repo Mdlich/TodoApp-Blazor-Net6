@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoApp.API.Data;
 using TodoApp.API.Models;
+using TodoApp.API.Models.User;
 using TodoApp.API.Static;
 
 namespace TodoApp.API.Controllers
@@ -20,54 +22,85 @@ namespace TodoApp.API.Controllers
     public class TodoesController : ControllerBase
     {
         private readonly TodoDBContext _context;
-		private readonly IMapper mapper;
-		private readonly ILogger<TodoesController> logger;
+        private readonly IMapper mapper;
+        private readonly ILogger<TodoesController> logger;
+        private readonly UserManager<TodoUser> userManager;
 
-		public TodoesController(TodoDBContext context, IMapper mapper, ILogger<TodoesController> logger)
+        public TodoesController(TodoDBContext context, IMapper mapper, ILogger<TodoesController> logger, UserManager<TodoUser> userManager)
         {
             _context = context;
-			this.mapper = mapper;
+            this.mapper = mapper;
             this.logger = logger;
-		}
-
-        // GET: api/Todoes
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<TodoReadDto>>> GetTodos()
-        {
-			try
-			{
-                var todoes = mapper.Map<IEnumerable<TodoReadDto>>(await _context.Todos.ToListAsync());
-                return Ok(todoes);
-			}
-			catch (Exception e)
-			{
-                logger.LogError(e, $"Error Performing GET in {nameof(GetTodos)}");
-				return StatusCode(500, Messages.Error500Message);
-			}
+            this.userManager = userManager;
         }
 
-		// GET: api/Todoes/5
-		[HttpGet("{id}")]
-		public async Task<ActionResult<TodoReadDto>> GetTodo(int id)
+        // GET: api/Todoes
+        [HttpGet()]
+        public async Task<ActionResult<IEnumerable<TodoReadDto>>> GetTodos()
         {
-			try
-			{
+            try
+            {
+                var userID = User.FindFirst("uid").Value;
+                var todoes = await _context.Todos.Where(todo => todo.TodoUserId == userID).ToListAsync();
+                var todoesDto = mapper.Map<IEnumerable<TodoReadDto>>(todoes);
+                return Ok(todoesDto);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"Error Performing GET in {nameof(GetTodos)}");
+                return StatusCode(500, Messages.Error500Message);
+            }
+        }
+
+        // GET: api/Todoes/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<TodoReadDto>> GetTodo(int id)
+        {
+            try
+            {
                 var todo = await _context.Todos.FindAsync(id);
                 var todoDto = mapper.Map<TodoReadDto>(todo);
-            
+
                 if (todoDto == null)
                 {
                     logger.LogWarning($"Record not found at {nameof(GetTodo)}. Id: {id}.");
                     return NotFound();
                 }
 
+                logger.LogInformation($"get record: {todoDto}");
                 return Ok(todoDto);
-			}
-			catch (Exception e)
-			{
+            }
+            catch (Exception e)
+            {
                 logger.LogError(e, $"Error Performing GET in {nameof(GetTodos)}");
                 return StatusCode(500, Messages.Error500Message);
-			}
+            }
+        }
+
+        [HttpPost()]
+        [Route("search")]
+        public async Task<ActionResult<TodoReadDto>> SearchTodo(SearchParameters sp)
+        {
+            try
+            {
+                var userID = User.FindFirst("uid").Value;
+                var todoes = await _context.Todos.Where(todo => todo.TodoUserId == userID && todo.Name.Contains(sp.SearchString)).ToListAsync();
+                var todoesDto = mapper.Map<IEnumerable<TodoReadDto>>(todoes);
+
+                if (todoesDto == null)
+                {
+                    logger.LogWarning($"Record not found at {nameof(GetTodo)}. Search string: {sp.SearchString}.");
+                    return NotFound();
+                }
+
+                logger.LogInformation($"get record: {todoesDto}");
+                return Ok(todoesDto);
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"Error Performing Post in {nameof(SearchTodo)}");
+                return StatusCode(500, Messages.Error500Message);
+            }
         }
 
         // PUT: api/Todoes/5
@@ -113,11 +146,16 @@ namespace TodoApp.API.Controllers
         {
 			try
 			{
+                var user = await userManager.FindByIdAsync(User.FindFirst("uid").Value);
                 var todo = mapper.Map<Todo>(todoDto);
-                _context.Todos.Add(todo);
+                await _context.Todos.AddAsync(todo);
+                //todo = entity.Entity;
+                //user.Todos.Add(todo);
+                //readTodo.Id = todo.Id;
                 await _context.SaveChangesAsync();
+                var readTodo = mapper.Map<TodoReadDto>(todo);
 
-                return CreatedAtAction(nameof(GetTodo), new { id = todo.Id }, todo);
+                return CreatedAtAction(nameof(GetTodo), new { id = todo.Id }, readTodo);
 			}
 			catch (Exception e)
 			{

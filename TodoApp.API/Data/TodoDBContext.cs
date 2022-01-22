@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using TodoApp.API.Models.User;
 
 namespace TodoApp.API.Data
 {
-    public partial class TodoDBContext : IdentityDbContext
+    public partial class TodoDBContext : IdentityDbContext<TodoUser>
     {
         public TodoDBContext()
         {
@@ -16,6 +17,7 @@ namespace TodoApp.API.Data
         public TodoDBContext(DbContextOptions<TodoDBContext> options)
             : base(options)
         {
+
         }
 
         public virtual DbSet<Todo> Todos { get; set; } = null!;
@@ -33,6 +35,8 @@ namespace TodoApp.API.Data
                 entity.Property(e => e.Name)
                     .HasMaxLength(50)
                     .HasColumnName("name");
+                entity.Property(e => e.TodoUserId)
+                    .HasColumnName("UserID");
             });
 
             modelBuilder.Entity<IdentityRole>().HasData(
@@ -49,10 +53,10 @@ namespace TodoApp.API.Data
                     Id = "6af8f92e-1e9c-4160-9517-562cf32524dd"
                 });
 
-            var hasher = new PasswordHasher<IdentityUser>();
+            var hasher = new PasswordHasher<TodoUser>();
 
-            modelBuilder.Entity<IdentityUser>().HasData(
-                new IdentityUser
+            modelBuilder.Entity<TodoUser>().HasData(
+                new TodoUser
                 {
                     Id = "6b2e4166-1722-400a-9fe1-f651ef15e852",
                     Email = "admin@Todo.com",
@@ -61,7 +65,7 @@ namespace TodoApp.API.Data
                     NormalizedUserName = "ADMIN@TODO.COM",
                     PasswordHash = hasher.HashPassword(null, "P@ssword1")
                 },
-                new IdentityUser
+                new TodoUser
                 {
                     Id = "dfa78716-7bdd-4929-b15d-8617337b9f52",
                     Email = "user@Todo.com",

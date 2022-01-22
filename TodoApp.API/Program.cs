@@ -6,6 +6,7 @@ using Serilog;
 using System.Text;
 using TodoApp.API.Configurations;
 using TodoApp.API.Data;
+using TodoApp.API.Models.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 var connString = builder.Configuration.GetConnectionString("TodoAppDbConnection");
 builder.Services.AddDbContext<TodoDBContext>(options => options.UseSqlServer(connString));
 
-builder.Services.AddIdentityCore<IdentityUser>()
+builder.Services.AddIdentityCore<TodoUser>()
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<TodoDBContext>();
 

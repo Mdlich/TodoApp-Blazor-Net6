@@ -12,7 +12,7 @@ namespace TodoApp.API.Configurations
 		{
 			CreateMap<TodoWriteDto, Todo>().ReverseMap();
 			CreateMap<TodoReadDto, Todo>().ReverseMap();
-			CreateMap<IdentityUser, UserDto>().ReverseMap();
+			CreateMap<TodoUser, UserDto>().ReverseMap();
 		}
 	}
 }
