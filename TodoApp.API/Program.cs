@@ -12,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 var connString = builder.Configuration.GetConnectionString("TodoAppDbConnection");
-builder.Services.AddDbContext<TodoDBContext>(options => options.UseSqlServer(connString));
+builder.Services.AddDbContext<TodoDBContext>(options => options.UseSqlite(connString));
 
 builder.Services.AddIdentityCore<TodoUser>()
 	.AddRoles<IdentityRole>()

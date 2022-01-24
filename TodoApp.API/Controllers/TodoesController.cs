@@ -148,9 +148,9 @@ namespace TodoApp.API.Controllers
 			{
                 var user = await userManager.FindByIdAsync(User.FindFirst("uid").Value);
                 var todo = mapper.Map<Todo>(todoDto);
-                await _context.Todos.AddAsync(todo);
+                user.Todos.Add(todo);
+                // await _context.Todos.AddAsync(todo);
                 //todo = entity.Entity;
-                //user.Todos.Add(todo);
                 //readTodo.Id = todo.Id;
                 await _context.SaveChangesAsync();
                 var readTodo = mapper.Map<TodoReadDto>(todo);
